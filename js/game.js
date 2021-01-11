@@ -3,9 +3,25 @@ const ctx = canvas.getContext('2d');
 
 let x = 0
 let y = 0
+const CUBE_SIZE_X = 100;
+const CUBE_SIZE_Y = 100;
 
 let directionHorizontal = true
 let directionVertical = true
+
+var img = new Image();
+img.src = "img/DVD_video_logo.png";
+
+let acl = new Accelerometer({frequency: 60});
+
+acl.addEventListener('reading', () => {
+    x += acl.x;
+  console.log("Acceleration along the X-axis " + acl.x);
+  console.log("Acceleration along the Y-axis " + acl.y);
+  console.log("Acceleration along the Z-axis " + acl.z);
+});
+
+acl.start();
 
 function gameLoop()
 {
@@ -13,7 +29,7 @@ function gameLoop()
     ctx.fillRect(0,0,canvas.width = screen.width,canvas.height = screen.height)
 
     ctx.fillStyle = 'red';
-    ctx.fillRect(x, y, 100, 100);
+    ctx.drawImage(img, x, y, CUBE_SIZE_X, CUBE_SIZE_Y)
 
     if(directionHorizontal)
     {
