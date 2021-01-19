@@ -1,4 +1,4 @@
-const canvas = document.getElementById('canvas1');
+const canvas = document.getElementById('canvasTest');
 const ctx = canvas.getContext('2d');
 
 let frame = 0;
@@ -63,7 +63,7 @@ function randomColor() {
 }
 
 function startup() {
-    var el = document.getElementById("canvas1");
+    var el = document.getElementById("canvasTest");
 
     //el.addEventListener("touchstart", handleStart, false);
     el.addEventListener("mouseup", handleEndClick, false);
@@ -269,7 +269,5 @@ function moveSquares(info) {
         ctx.globalCompositeOperation = "source-over";
     }
 }
-
-
 
 setInterval(gameLoop, 1000/60)
