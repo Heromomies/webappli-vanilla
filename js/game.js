@@ -4,9 +4,6 @@ const ctx = canvas.getContext('2d');
 let frame = 0;
 let variable = "Hello"
 
-let img = new Image();
-img.src = 'img/DVD_video_logo.png';
-
 let debugText = new Text();
 debugText = document.getElementById('debug');
 
@@ -18,7 +15,7 @@ let rectUseAcc = false;
 let circleUseAcc = true;
 
 
-function rect_create(x, y, xSpeed, ySpeed, xSize, ySize, color, img) {
+function rect_create(x, y, xSpeed, ySpeed, xSize, ySize, color) {
     let square = {
         x: x,
         y: y,
@@ -26,8 +23,7 @@ function rect_create(x, y, xSpeed, ySpeed, xSize, ySize, color, img) {
         ySpeed: ySpeed,
         xSize : xSize,
         ySize : ySize,
-        color : color,
-        img : img
+        color : color
     };
     return square
 }
@@ -249,25 +245,5 @@ function moveSquares(info) {
 
     info.x += info.xSpeed;
     info.y += info.ySpeed;
-
-
-    if (!info.img) {
-        ctx.fillStyle = info.color;
-        ctx.fillRect(info.x, info.y, info.xSize, info.ySize)
-    }
-    else 
-    {
-        // draw color
-        ctx.fillStyle = info.color;
-        ctx.fillRect(info.x, info.y, info.xSize, info.ySize);
-  
-        // set composite mode
-        ctx.globalCompositeOperation = "destination-in";
-  
-        ctx.drawImage(img, info.x, info.y, info.xSize, info.ySize);
-
-        ctx.globalCompositeOperation = "source-over";
-    }
 }
-
 setInterval(gameLoop, 1000/60)
