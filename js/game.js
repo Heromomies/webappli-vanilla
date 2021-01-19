@@ -1,256 +1,275 @@
-const canvas = document.getElementById('canvasTest');
+const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
 
-// canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
-// canvas.height = document.documentElement.clientHeight || document.body.clientHeight;
+let frame = 0;
+let variable = "Hello"
 
-function rect_create(x, y, w, h, color, dx, dy) {
-    let obj = {
+let img = new Image();
+img.src = 'img/DVD_video_logo.png';
+
+let debugText = new Text();
+debugText = document.getElementById('debug');
+
+let xAcc = 0;
+let yAcc = 0;
+let zAcc = 0;
+
+let rectUseAcc = false;
+let circleUseAcc = true;
+
+
+function rect_create(x, y, xSpeed, ySpeed, xSize, ySize, color, img) {
+    let square = {
         x: x,
         y: y,
-        w: w,
-        h: h,
-        color: color,
-        dx: dx,
-        dy: dy,
-        draw: rect_draw
-    }
-    return obj
+        xSpeed: xSpeed,
+        ySpeed: ySpeed,
+        xSize : xSize,
+        ySize : ySize,
+        color : color,
+        img : img
+    };
+    return square
 }
 
-let rect = rect_create(10, 20, 30, 50, 'red', 3, 5)
-let rect2 = rect_create(100, 20, 30, 50, 'green', 3, 5)
+function circle_create(x, y, xSpeed, ySpeed, radius, color) {
+    let circle = {
+        x: x,
+        y: y,
+        xSpeed: xSpeed,
+        ySpeed: ySpeed,
+        radius : radius,
+        color : color
+    };
+    return circle
+}
+
+let rect = rect_create(200, 100, -2, 2, 100, 60, 'red', true)
+let rect1 = rect_create(100, 200, 4, 2, 30, 40, 'blue', false)
+let circle = circle_create(200, 200, 0, 0, 50, randomColor())
 
 let gameobjects = [
     rect,
-    // rect2
+    rect1
 ]
 
-let frame = 0
+let circleobjects = [
+    circle
+]
 
-const colors = ['blue', 'red', 'yellow']
-
-function gameLoop() {
-    // ctx.fillStyle = 'white';
-    // ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    for (const obj of gameobjects)
-        obj.draw()
-
-    frame += 1
-    if (frame % 30 == 0) {
-        gameobjects.push(rect_create(30, 20, 100, 100, colors[Math.floor(Math.random() * colors.length)], 3, 8))
-    }
+function randomColor() {
+    let color = "#" + Math.floor(Math.random()*16777215).toString(16);
+    return color;
 }
-
-function rect_draw() {
-    // ctx.fillRect(this.x, this.y, this.w, this.h);
-    ctx.beginPath()
-    ctx.fillStyle = this.color;
-    ctx.arc(this.x, this.y, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.closePath()
-
-    if (!this.offset) this.offset = frame
-    this.x = canvas.width / 2 + Math.cos(frame / 15 + this.offset) * (canvas.width / 10) * this.space
-    this.y = canvas.height / 2 + Math.sin(frame / 15 + this.offset) * (canvas.height / 10) * this.space
-    this.space = this.space == undefined ? 1 : (this.space + 0.01)
-    // this.x += this.dx
-    // this.y += this.dy
-}
-
-let gyroscope = new Gyroscope({
-    frequency: 60
-});
-
-let gyroValue = {
-    x: 0,
-    y: 0,
-    z: 0
-}
-gyroscope.addEventListener('reading', e => {
-    gyroValue.x += gyroscope.x
-    gyroValue.y += gyroscope.y
-    gyroValue.z += gyroscope.z
-    document.getElementById("gyro").innerHTML = Math.floor(gyroValue.x) + "<br>" + Math.floor(gyroValue.y) + "<br>" + Math.floor(gyroValue.z)
-});
-gyroscope.start();
-
-let accelerometer = new Accelerometer({
-    frequency: 60
-});
-
-accelerometer.addEventListener('reading', e => {
-    document.getElementById("accele").innerHTML = Math.floor(accelerometer.x) + "<br>" + Math.floor(accelerometer.y) + "<br>" + Math.floor(accelerometer.z)
-});
-accelerometer.start();
-
-// setInterval(gameLoop, 1000 / 60)
-/* const canvas = document.getElementById('canvasTest');
-const ctx = canvas.getContext('2d');
-
-
-
-let x = 0
-let y = 0
-let directionHorizontal = true
-let directionVertical = true
-canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
-canvas.height = document.documentElement.clientHeight || document.body.clientHeight;
-var ongoingTouches = [];
-
-var img = new Image()
-img.src = "img/DVD_video_logo.png"
-
-function gameLoop(){
-
-    ctx.fillStyle = "white"
-    ctx.fillRect(0,0,canvas.width,canvas.height)
-
-    ctx.drawImage(img,x,y,100,100)
-    
-    if(directionHorizontal){
-        x+=3
-    }
-    else{
-        x-=3
-    }
-    if(directionVertical){
-        y+=3
-    }
-    else{
-        y-=3
-    }
-    
-    if(x>canvas.width-100 || x<0){
-        directionHorizontal = !directionHorizontal
-    }
-    else if(y>canvas.height-100|| y<0){
-        directionVertical = !directionVertical
-    }
-}
-
-setInterval(gameLoop,1000 / 60)
-
-
 
 function startup() {
-    var el = document.getElementById("canvasTest");
-    el.addEventListener("touchstart", handleStart, false);
-    el.addEventListener("touchend", handleEnd, false);
-    el.addEventListener("touchcancel", handleCancel, false);
-    el.addEventListener("touchmove", handleMove, false);
-}
-  
-  document.addEventListener("DOMContentLoaded", startup);
+    var el = document.getElementById("canvas1");
 
-  function handleStart(evt) {
-    evt.preventDefault();
-    console.log("touchstart.");
-    var el = document.getElementById("canvasTest");
-    var ctx = el.getContext("2d");
-    var touches = evt.changedTouches;
-  
-    for (var i = 0; i < touches.length; i++) {
-      console.log("touchstart:" + i + "...");
-      ongoingTouches.push(copyTouch(touches[i]));
-      var color = colorForTouch(touches[i]);
-      ctx.beginPath();
-      ctx.arc(touches[i].pageX, touches[i].pageY, 4, 0, 2 * Math.PI, false);  // a circle at the start
-      ctx.fillStyle = color;
-      ctx.fill();
-      console.log("touchstart:" + i + ".");
-    }
+    //el.addEventListener("touchstart", handleStart, false);
+    el.addEventListener("mouseup", handleEndClick, false);
+    //el.addEventListener("touchcancel", handleCancel, false);
+    //el.addEventListener("touchmove", handleMove, false);
+
+    navigator.permissions.query({name:'accelerometer'}).then(function(result) {
+        if (result.state == 'granted') {
+            let acl = new Accelerometer({frequency: 60});
+
+            acl.addEventListener('reading', () => {
+            xAcc = acl.x;
+            yAcc = acl.y;
+            zAcc = acl.z;
+            });
+
+            acl.start();
+        } else if (result.state == 'prompt') {
+
+        }
+        // Don't do anything if the permission was denied.
+    });
 }
 
-function handleMove(evt) {
-    evt.preventDefault();
-    var el = document.getElementById("canvasTest");
-    var ctx = el.getContext("2d");
-    var touches = evt.changedTouches;
+document.addEventListener("DOMContentLoaded", startup);
+
+function gameLoop() {
+    frame += 1
+    debugText.textContent = "Debug console : ";
+    debugText.textContent += "xAcc : " + Math.round(xAcc) + "  yAcc : " + Math.round(yAcc) + "  zAcc : " + Math.round(zAcc) + "    V0.1";
+
+    canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
+    canvas.height = document.documentElement.clientHeight - 60 || document.body.clientHeight - 60;
+
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight)
+
+    gameobjects.forEach(
+    square => {
+        moveSquares(square);
+    });
+
+    circleobjects.forEach(
+    circle => {
+        moveCircle(circle);
+    });
+}
+
+function handleEnd(evt)
+{
+    var touches = evt.changedTouches
+
+    let xSPeed = getRandomArbitrary(-2, 2);
+    let ySpeed = getRandomArbitrary(-2, 2);
+
+    let xSize = getRandomArbitrary(10, 200);
+    let ySize = getRandomArbitrary(10, 200);
+
+    let xPos = touches[0].pageX - xSize/2;
+    let yPos = touches[0].pageY - ySize/2;
+
+    let color = randomColor();
+
+    let newRect = rect_create(xPos, yPos, xSPeed, ySpeed, xSize, ySize, color, false)
+    gameobjects.push(newRect)
+}
+function handleEndClick(evt)
+{
+    let xSPeed = getRandomArbitrary(-2, 2);
+    let ySpeed = getRandomArbitrary(-2, 2);
+
+    let xSize = getRandomArbitrary(10, 200);
+    //let ySize = getRandomArbitrary(10, 200);
+
+    //let xPos = evt.offsetX - xSize/2;
+    //let yPos = evt.offsetY - ySize/2;
+    let xPos = evt.offsetX;
+    let yPos = evt.offsetY;
+
+    let color = randomColor();
+
+    //let newRect = cir(xPos, yPos, xSPeed, ySpeed, xSize, ySize, color, false)
+    let newCircle = circle_create(xPos, yPos, /*xSPeed, ySpeed,*/ 0, 0, xSize / 2, color, false)
+
+
+    //gameobjects.push(newRect)
+    circleobjects.push(newCircle)
+}
+
+function getRandomArbitrary(min, max) 
+{
+    return Math.random() * (max - min) + min;
+}
+
+function moveCircle(circle) {
+    if (circleUseAcc) {
+        circle.x += xAcc * -1;
+        circle.y += yAcc;
+    }
+
+    if (circle.x + circle.radius + circle.xSpeed >= canvas.clientWidth) {
+        circle.x = canvas.clientWidth - circle.radius;
+
+        if (!circleUseAcc) {
+            circle.xSpeed = -2;
+        }
+    }
+    if (circle.x - circle.radius + circle.xSpeed <= 0) {
+        circle.x = 0 + circle.radius;
+
+        if (!circleUseAcc) {
+            circle.xSpeed = 2;
+        }
+    }
+
+    if (circle.y + circle.radius + circle.ySpeed >= canvas.clientHeight) {
+        circle.y = canvas.clientHeight - circle.radius;
+
+        if (!circleUseAcc) {
+            circle.ySpeed = -2;
+        }
+    }
+    if (circle.y - circle.radius + circle.ySpeed <= 0) {
+        circle.y = 0 + circle.radius;
+
+        if (!circleUseAcc) {
+            circle.ySpeed = 2;
+        }
+    }
+
+    if (!circleUseAcc) {
+        circle.x += circle.xSpeed;
+        circle.y += circle.ySpeed;
+    }
+    
+    
+    ctx.fillStyle = circle.color;
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+
+function moveSquares(info) {
+    if (rectUseAcc) {
+        info.xSPeed = -xAcc;
+        info.ySpeed = yAcc;
+    }
+
+    if (info.x + info.xSize + info.xSpeed >= canvas.clientWidth) {
+        info.x = canvas.clientWidth - info.xSize;
+
+        if (!rectUseAcc) {
+            info.xSpeed = -2;
+            info.color = randomColor();
+        }
+    }
+    if (info.x + info.xSpeed <= 0) {
+        info.x = 0;
+
+        if (!rectUseAcc) {
+            info.xSpeed = 2;
+            info.color = randomColor();
+        }
+    }
+
+    if (info.y + info.ySize + info.ySpeed >= canvas.clientHeight) {
+        info.y = canvas.clientHeight - info.ySize;
+
+        if (!rectUseAcc) {
+            info.ySpeed = -2;
+            info.color = randomColor();
+        }
+    }
+    if (info.y + info.ySpeed <= 0) {
+        info.y = 0;
+
+        if (!rectUseAcc) {
+            info.ySpeed = 2;
+            info.color = randomColor();
+        }
+    }
+
+    info.x += info.xSpeed;
+    info.y += info.ySpeed;
+
+
+    if (!info.img) {
+        ctx.fillStyle = info.color;
+        ctx.fillRect(info.x, info.y, info.xSize, info.ySize)
+    }
+    else 
+    {
+        // draw color
+        ctx.fillStyle = info.color;
+        ctx.fillRect(info.x, info.y, info.xSize, info.ySize);
   
-    for (var i = 0; i < touches.length; i++) {
-      var color = colorForTouch(touches[i]);
-      var idx = ongoingTouchIndexById(touches[i].identifier);
+        // set composite mode
+        ctx.globalCompositeOperation = "destination-in";
   
-      if (idx >= 0) {
-        console.log("continuing touch "+idx);
-        ctx.beginPath();
-        console.log("ctx.moveTo(" + ongoingTouches[idx].pageX + ", " + ongoingTouches[idx].pageY + ");");
-        ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
-        console.log("ctx.lineTo(" + touches[i].pageX + ", " + touches[i].pageY + ");");
-        ctx.lineTo(touches[i].pageX, touches[i].pageY);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = color;
-        ctx.stroke();
-  
-        ongoingTouches.splice(idx, 1, copyTouch(touches[i]));  // swap in the new touch record
-        console.log(".");
-      } else {
-        console.log("can't figure out which touch to continue");
-      }
+        ctx.drawImage(img, info.x, info.y, info.xSize, info.ySize);
+
+        ctx.globalCompositeOperation = "source-over";
     }
 }
 
-  function handleEnd(evt) {
-    evt.preventDefault();
-    console.log("touchend");
-    var el = document.getElementById("canvasTest");
-    var ctx = el.getContext("2d");
-    var touches = evt.changedTouches;
-  
-    for (var i = 0; i < touches.length; i++) {
-      var color = colorForTouch(touches[i]);
-      var idx = ongoingTouchIndexById(touches[i].identifier);
-  
-      if (idx >= 0) {
-        ctx.lineWidth = 4;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
-        ctx.lineTo(touches[i].pageX, touches[i].pageY);
-        ctx.fillRect(touches[i].pageX - 4, touches[i].pageY - 4, 8, 8);  // and a square at the end
-        ongoingTouches.splice(idx, 1);  // remove it; we're done
-      } else {
-        console.log("can't figure out which touch to end");
-      }
-    }
-  }
 
-  function handleCancel(evt) {
-    evt.preventDefault();
-    console.log("touchcancel.");
-    var touches = evt.changedTouches;
-  
-    for (var i = 0; i < touches.length; i++) {
-      var idx = ongoingTouchIndexById(touches[i].identifier);
-      ongoingTouches.splice(idx, 1);  // remove it; we're done
-    }
-  }
 
-  function colorForTouch(touch) {
-    var r = touch.identifier % 16;
-    var g = Math.floor(touch.identifier / 3) % 16;
-    var b = Math.floor(touch.identifier / 7) % 16;
-    r = r.toString(16); // make it a hex digit
-    g = g.toString(16); // make it a hex digit
-    b = b.toString(16); // make it a hex digit
-    var color = "#" + r + g + b;
-    console.log("color for touch with identifier " + touch.identifier + " = " + color);
-    return color;
-  }
-
-  function ongoingTouchIndexById(idToFind) {
-    for (var i = 0; i < ongoingTouches.length; i++) {
-      var id = ongoingTouches[i].identifier;
-  
-      if (id == idToFind) {
-        return i;
-      }
-    }
-    return -1;    // not found
-  }
-
-  function copyTouch({ identifier, pageX, pageY }) {
-    return { identifier, pageX, pageY };
-  }*/
+setInterval(gameLoop, 1000/60)
