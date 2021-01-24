@@ -1,249 +1,202 @@
-const canvas = document.getElementById('canvasTest');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let frame = 0;
-let variable = "Hello"
+canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
+canvas.height = document.documentElement.clientHeight || document.body.clientHeight;
 
-let debugText = new Text();
-debugText = document.getElementById('debug');
+let x = 0
+let y = 0
 
-let xAcc = 0;
-let yAcc = 0;
-let zAcc = 0;
+let moveX = 3;
+let moveY = 3;
 
-let rectUseAcc = false;
-let circleUseAcc = true;
+var ongoingTouches = [];
 
+const objs = [];
+const index = getRandomIntInclusive(1, 20);
 
-function rect_create(x, y, xSpeed, ySpeed, xSize, ySize, color) {
-    let square = {
-        x: x,
-        y: y,
-        xSpeed: xSpeed,
-        ySpeed: ySpeed,
-        xSize : xSize,
-        ySize : ySize,
-        color : color
-    };
-    return square
+let frame = 60;
+
+const colors = ['#a6f0c6', '#a98b98', '#4e3d53', '#0f1123']
+
+function initialisation() {
+    for (let i = 0; i < index; i++) {
+        const xCircle = Math.random() * canvas.width
+        const yCircle = Math.random() * canvas.height
+        const rCircle = Math.random() * 30 + 20;
+        const color = colors[Math.floor(Math.random() * colors.length)]
+        const startAngle = Math.random() * 10 + 20;
+        const endAngle = Math.random() * 10 + 30;
+        const lineWidth = getRandomIntInclusive(10, 50);
+        objs.push(circleCreate(xCircle, yCircle, rCircle, color, startAngle, endAngle, lineWidth))
+
+    }
 }
 
-function circle_create(x, y, xSpeed, ySpeed, radius, color) {
-    let circle = {
-        x: x,
-        y: y,
-        xSpeed: xSpeed,
-        ySpeed: ySpeed,
-        radius : radius,
-        color : color
-    };
-    return circle
+function circleCreate(x, y, r, color, startAngle, endAngle, lineWidth) {
+
+    let obj = {
+        xCircle: x,
+        yCircle: y,
+        rCircle: r,
+        color: color,
+        startAngle: startAngle,
+        endAngle: endAngle,
+        lineWidth: lineWidth,
+    }
+    return obj;
 }
 
-let rect = rect_create(200, 100, -2, 2, 100, 60, 'red', true)
-let rect1 = rect_create(100, 200, 4, 2, 30, 40, 'blue', false)
-let circle = circle_create(200, 200, 0, 0, 50, randomColor())
+function gameLoop() {
 
-let gameobjects = [
-    rect,
-    rect1
-]
+    if (x + moveX >= canvas.width - 100 || x + moveX <= 0) {
 
-let circleobjects = [
-    circle
-]
+        moveX *= -1;
+    }
 
-function randomColor() {
-    let color = "#" + Math.floor(Math.random()*16777215).toString(16);
-    return color;
+    if (y + moveY >= canvas.height - 100 || y + moveY <= 0) {
+        moveY *= -1;
+    }
+
+    x += moveX;
+    y += moveY;
+
+    objs.forEach(drawCircle);
+}
+
+setInterval(gameLoop, 1000 / frame)
+initialisation();
+
+function drawCircle(obj) {
+
+    ctx.beginPath();
+    ctx.fillStyle = obj.color;
+    ctx.arc(obj.xCircle, obj.yCircle, obj.rCircle, obj.startAngle * frame, obj.endAngle * Math.PI * frame, false);
+    ctx.lineWidth = obj.lineWidth;
+    //ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
+
+    ctx.stroke();
+    ctx.fill();
+    //Fait bouger les cercles
+    obj.xCircle += Math.cos(frame / getRandomIntInclusive(10, 20)) * getRandomIntInclusive(1, 2);
+    obj.yCircle += Math.sin(frame / getRandomIntInclusive(10, 20)) * getRandomIntInclusive(1, 2);
+    ctx.closePath();
+}
+
+function getRandomIntInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function startup() {
-    var el = document.getElementById("canvasTest");
 
-    //el.addEventListener("touchstart", handleStart, false);
-    el.addEventListener("mouseup", handleEndClick, false);
-    //el.addEventListener("touchcancel", handleCancel, false);
-    //el.addEventListener("touchmove", handleMove, false);
+    canvas.addEventListener("touchstart", handleStart, false);
 
-    navigator.permissions.query({name:'accelerometer'}).then(function(result) {
-        if (result.state == 'granted') {
-            let acl = new Accelerometer({frequency: 60});
-
-            acl.addEventListener('reading', () => {
-            xAcc = acl.x;
-            yAcc = acl.y;
-            zAcc = acl.z;
-            });
-
-            acl.start();
-        } else if (result.state == 'prompt') {
-
-        }
-        // Don't do anything if the permission was denied.
-    });
 }
 
 document.addEventListener("DOMContentLoaded", startup);
 
-function gameLoop() {
-    frame += 1
-    debugText.textContent = "Debug console : ";
-    debugText.textContent += "xAcc : " + Math.round(xAcc) + "  yAcc : " + Math.round(yAcc) + "  zAcc : " + Math.round(zAcc) + "    V0.1";
+function handleStart(evt) {
+    evt.preventDefault();
+    console.log("touchstart.");
 
-    canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
-    canvas.height = document.documentElement.clientHeight - 60 || document.body.clientHeight - 60;
+    var touches = evt.changedTouches;
 
-    ctx.fillStyle = 'white'
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight)
+    for (var i = 0; i < touches.length; i++) {
+        ongoingTouches.push(copyTouch(touches[i]));
 
-    gameobjects.forEach(
-    square => {
-        moveSquares(square);
-    });
-
-    circleobjects.forEach(
-    circle => {
-        moveCircle(circle);
-    });
+        ctx.beginPath();
+        initialisation();
+        objs.forEach(drawCircle);
+    }
 }
 
-function handleEnd(evt)
-{
-    var touches = evt.changedTouches
+function handleEnd(evt) {
+    evt.preventDefault();
 
-    let xSPeed = getRandomArbitrary(-2, 2);
-    let ySpeed = getRandomArbitrary(-2, 2);
+    var el = document.getElementById("canvas");
+    var ctx = el.getContext("2d");
+    var touches = evt.changedTouches;
 
-    let xSize = getRandomArbitrary(10, 200);
-    let ySize = getRandomArbitrary(10, 200);
+    for (var i = 0; i < touches.length; i++) {
+        var color = colorForTouch(touches[i]);
+        var idx = ongoingTouchIndexById(touches[i].identifier);
 
-    let xPos = touches[0].pageX - xSize/2;
-    let yPos = touches[0].pageY - ySize/2;
-
-    let color = randomColor();
-
-    let newRect = rect_create(xPos, yPos, xSPeed, ySpeed, xSize, ySize, color, false)
-    gameobjects.push(newRect)
-}
-function handleEndClick(evt)
-{
-    let xSPeed = getRandomArbitrary(-2, 2);
-    let ySpeed = getRandomArbitrary(-2, 2);
-
-    let xSize = getRandomArbitrary(10, 200);
-    //let ySize = getRandomArbitrary(10, 200);
-
-    //let xPos = evt.offsetX - xSize/2;
-    //let yPos = evt.offsetY - ySize/2;
-    let xPos = evt.offsetX;
-    let yPos = evt.offsetY;
-
-    let color = randomColor();
-
-    //let newRect = cir(xPos, yPos, xSPeed, ySpeed, xSize, ySize, color, false)
-    let newCircle = circle_create(xPos, yPos, /*xSPeed, ySpeed,*/ 0, 0, xSize / 2, color, false)
-
-
-    //gameobjects.push(newRect)
-    circleobjects.push(newCircle)
+        if (idx >= 0) {
+            ctx.lineWidth = 4;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
+            ctx.lineTo(touches[i].pageX, touches[i].pageY);
+            ctx.fillRect(touches[i].pageX - 4, touches[i].pageY - 4, 8, 8); // and a square at the end
+            ongoingTouches.splice(idx, 1); // remove it; we're done
+        } else {
+            console.log("can't figure out which touch to end");
+        }
+    }
 }
 
-function getRandomArbitrary(min, max) 
-{
-    return Math.random() * (max - min) + min;
+function handleCancel(evt) {
+    evt.preventDefault();
+    console.log("touchcancel.");
+    var touches = evt.changedTouches;
+
+    for (var i = 0; i < touches.length; i++) {
+        var idx = ongoingTouchIndexById(touches[i].identifier);
+        ongoingTouches.splice(idx, 1); // remove it; we're done
+    }
 }
 
-function moveCircle(circle) {
-    if (circleUseAcc) {
-        circle.x += xAcc * -1;
-        circle.y += yAcc;
-    }
+function handleMove(evt) {
+    evt.preventDefault();
+    var el = document.getElementById("canvas");
+    var ctx = el.getContext("2d");
+    var touches = evt.changedTouches;
 
-    if (circle.x + circle.radius + circle.xSpeed >= canvas.clientWidth) {
-        circle.x = canvas.clientWidth - circle.radius;
 
-        if (!circleUseAcc) {
-            circle.xSpeed = -2;
+    for (var i = 0; i < touches.length; i++) {
+        var color = colorForTouch(touches[i]);
+        var idx = ongoingTouchIndexById(touches[i].identifier);
+
+        if (idx >= 0) {
+            console.log("continuing touch " + idx);
+            ctx.beginPath();
+            console.log("ctx.moveTo(" + ongoingTouches[idx].pageX + ", " + ongoingTouches[idx].pageY + ");");
+            ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
+            console.log("ctx.lineTo(" + touches[i].pageX + ", " + touches[i].pageY + ");");
+            ctx.lineTo(touches[i].pageX, touches[i].pageY);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+
+            ongoingTouches.splice(idx, 1, copyTouch(touches[i])); // swap in the new touch record
+            console.log(".");
+        } else {
+            console.log("can't figure out which touch to continue");
         }
     }
-    if (circle.x - circle.radius + circle.xSpeed <= 0) {
-        circle.x = 0 + circle.radius;
-
-        if (!circleUseAcc) {
-            circle.xSpeed = 2;
-        }
-    }
-
-    if (circle.y + circle.radius + circle.ySpeed >= canvas.clientHeight) {
-        circle.y = canvas.clientHeight - circle.radius;
-
-        if (!circleUseAcc) {
-            circle.ySpeed = -2;
-        }
-    }
-    if (circle.y - circle.radius + circle.ySpeed <= 0) {
-        circle.y = 0 + circle.radius;
-
-        if (!circleUseAcc) {
-            circle.ySpeed = 2;
-        }
-    }
-
-    if (!circleUseAcc) {
-        circle.x += circle.xSpeed;
-        circle.y += circle.ySpeed;
-    }
-    
-    
-    ctx.fillStyle = circle.color;
-    ctx.beginPath();
-    ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
-    ctx.fill();
 }
 
-
-function moveSquares(info) {
-    if (rectUseAcc) {
-        info.xSPeed = -xAcc;
-        info.ySpeed = yAcc;
-    }
-
-    if (info.x + info.xSize + info.xSpeed >= canvas.clientWidth) {
-        info.x = canvas.clientWidth - info.xSize;
-
-        if (!rectUseAcc) {
-            info.xSpeed = -2;
-            info.color = randomColor();
-        }
-    }
-    if (info.x + info.xSpeed <= 0) {
-        info.x = 0;
-
-        if (!rectUseAcc) {
-            info.xSpeed = 2;
-            info.color = randomColor();
-        }
-    }
-
-    if (info.y + info.ySize + info.ySpeed >= canvas.clientHeight) {
-        info.y = canvas.clientHeight - info.ySize;
-
-        if (!rectUseAcc) {
-            info.ySpeed = -2;
-            info.color = randomColor();
-        }
-    }
-    if (info.y + info.ySpeed <= 0) {
-        info.y = 0;
-
-        if (!rectUseAcc) {
-            info.ySpeed = 2;
-            info.color = randomColor();
-        }
-    }
-
-    info.x += info.xSpeed;
-    info.y += info.ySpeed;
+function copyTouch({
+    identifier,
+    pageX,
+    pageY
+}) {
+    return {
+        identifier,
+        pageX,
+        pageY
+    };
 }
-setInterval(gameLoop, 1000/60)
+
+function ongoingTouchIndexById(idToFind) {
+    for (var i = 0; i < ongoingTouches.length; i++) {
+        var id = ongoingTouches[i].identifier;
+
+        if (id == idToFind) {
+            return i;
+        }
+    }
+    return -1; // not found
+}
